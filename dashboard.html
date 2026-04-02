@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Lost & Found</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .dashboard-hero { text-align: center; padding: 80px 20px 50px; }
+        .dashboard-hero h2 { font-size: 28px; color: #0a3d62; margin-bottom: 10px; }
+        .dashboard-hero p { color: #666; font-size: 16px; max-width: 600px; margin: 0 auto 40px; }
+        .action-grid { display: flex; justify-content: center; gap: 25px; flex-wrap: wrap; max-width: 900px; margin: 0 auto; }
+        .action-card {
+            background: white; border-radius: 12px; padding: 35px 25px; width: 260px;
+            text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            text-decoration: none; color: inherit; transition: all 0.3s;
+        }
+        .action-card:hover { transform: translateY(-8px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .action-card .icon { font-size: 48px; margin-bottom: 15px; }
+        .action-card h3 { font-size: 19px; color: #0a3d62; margin-bottom: 8px; }
+        .action-card p { color: #666; font-size: 14px; }
+        #welcomeName { color: #0a3d62; }
+
+        /* Avatar in navbar */
+        .nav-links li.avatar-li {
+            margin-left: 20px;
+            list-style: none;
+        }
+        .nav-links li.avatar-li img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="logo">Lost & Found</div>
+    <ul class="nav-links">
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="lost.html">Report Lost</a></li>
+        <li><a href="items.html">View Items</a></li>
+        <li><a href="backend/logout.php">Logout</a></li>
+        <li class="avatar-li">
+            <img id="userAvatar" src="images/default-avatar.png" alt="Avatar">
+        </li>
+    </ul>
+</nav>
+
+<section class="dashboard-hero">
+    <h2>Welcome, <span id="welcomeName">...</span>!</h2>
+    <p>What would you like to do today?</p>
+
+    <div class="action-grid">
+        <a href="lost.html" class="action-card">
+            <div class="icon">🔍</div>
+            <h3>Report Lost Item</h3>
+            <p>Tell us what you've lost so we can match it to found items.</p>
+        </a>
+        <a href="items.html" class="action-card">
+            <div class="icon">📋</div>
+            <h3>View My Items</h3>
+            <p>See your lost reports, matching found items, and collected items.</p>
+        </a>
+    </div>
+</section>
+
+<script>
+fetch('backend/session_info.php')
+    .then(function (r) { return r.json(); })
+    .then(function (s) {
+        if (!s.logged_in) {
+            window.location.href = 'login.html';
+            return;
+        }
+        if (s.is_admin) {
+            window.location.href = 'admin.php';
+            return;
+        }
+        document.getElementById('welcomeName').textContent = s.name || 'there';
+
+        // Set avatar based on gender
+        const avatarImg = document.getElementById('userAvatar');
+        if (s.gender === 'male') {
+            avatarImg.src = 'images/male.png';
+        } else if (s.gender === 'female') {
+            avatarImg.src = 'images/female.png';
+        } else {
+            avatarImg.src = 'images/default-avatar.png';
+        }
+    })
+    .catch(function () {
+        window.location.href = 'login.html';
+    });
+</script>
+</body>
+</html>

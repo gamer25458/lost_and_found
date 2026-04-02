@@ -1,0 +1,21 @@
+[2026-03-31 11:12:50] Login failed for user1@lostandfound.com | Invalid email or password.
+[2026-03-31 15:56:38] Uncaught exception | mysqli_stmt::bind_param(): Argument #2 cannot be passed by reference
+[2026-03-31 15:56:40] Uncaught exception | mysqli_stmt::bind_param(): Argument #2 cannot be passed by reference
+[2026-03-31 15:56:42] Uncaught exception | mysqli_stmt::bind_param(): Argument #2 cannot be passed by reference
+[2026-03-31 15:56:49] Uncaught exception | mysqli_stmt::bind_param(): Argument #2 cannot be passed by reference
+[2026-03-31 15:56:51] Uncaught exception | mysqli_stmt::bind_param(): Argument #2 cannot be passed by reference
+[2026-03-31 15:57:23] Uncaught exception | mysqli_stmt::bind_param(): Argument #2 cannot be passed by reference
+[2026-03-31 15:57:26] Uncaught exception | mysqli_stmt::bind_param(): Argument #2 cannot be passed by reference
+[2026-04-01 14:59:38] submit_lost | Table 'lost_and_found.lost_item_photos' doesn't exist
+[2026-04-01 15:00:34] submit_lost | Table 'lost_and_found.lost_item_photos' doesn't exist
+[2026-04-01 15:12:14] submit_claim | Unknown column 'username' in 'field list'
+[2026-04-01 15:12:48] submit_claim | You already have a pending claim for this pair.
+[2026-04-01 15:13:21] submit_claim | Unknown column 'username' in 'field list'
+[2026-04-01 15:18:23] submit_claim | You already have a pending claim for this pair.
+[2026-04-01 15:19:02] submit_claim | You already have a pending claim for this pair.
+[2026-04-02 00:19:52] submit_lost | Unknown column 'color' in 'field list'
+[2026-04-02 00:21:06] submit_lost | Unknown column 'color' in 'field list'
+[2026-04-02 01:26:03] Login failed for user1@lostandfound.com | Invalid email or password.
+[2026-04-02 02:24:48] Login failed for user1@lostandfound.com | Invalid email or password.
+[2026-04-02 02:28:25] Login failed for user1@lostandfound.com | Invalid email or password.
+[2026-04-02 02:30:10] Login failed for user1@lostandfound.com | Invalid email or password.

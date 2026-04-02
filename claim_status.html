@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claim status | Lost & Found</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .wrap { max-width: 720px; margin: 30px auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.07); }
+    .status-pill { display: inline-block; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; text-transform: uppercase; margin-bottom: 16px; }
+    .status-pill.pending { background: #fff8e1; color: #f57c00; }
+    .status-pill.approved { background: #e8f5e9; color: #2e7d32; }
+    .status-pill.rejected { background: #fdecea; color: #c0392b; }
+    .gallery { display: flex; gap: 8px; overflow-x: auto; margin-top: 16px; padding-bottom: 8px; }
+    .gallery img { height: 88px; width: auto; border-radius: 8px; cursor: pointer; object-fit: cover; }
+    .hero-img { width: 100%; max-height: 320px; object-fit: contain; border-radius: 10px; background: #f5f5f5; }
+    p { line-height: 1.5; color: #444; margin: 8px 0; }
+    h2 { color: #0a3d62; }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="logo">Lost & Found</div>
+  <ul class="nav-links">
+    <li><a href="items.html?tab=found">Found items</a></li>
+    <li><a href="backend/logout.php">Logout</a></li>
+  </ul>
+</nav>
+
+<div class="wrap" id="root">
+  <p>Loading…</p>
+</div>
+
+<script>
+(function () {
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  const id = parseInt(new URLSearchParams(window.location.search).get('id') || '0', 10);
+  const root = document.getElementById('root');
+  if (!id) {
+    root.innerHTML = '<p>Invalid claim.</p>';
+    return;
+  }
+
+  let photos = [];
+  let mainIdx = 0;
+
+  fetch('backend/get_claim.php?id=' + id)
+    .then(function (r) { return r.json(); })
+    .then(function (c) {
+      if (c.error) {
+        root.innerHTML = '<p>' + esc(c.error) + '</p>';
+        return;
+      }
+      photos = c.photos || [];
+      const st = (c.status || '').toLowerCase();
+      let pill = '<span class="status-pill ' + esc(st) + '">' + esc(st) + '</span>';
+
+      let extra = '';
+      if (st === 'approved') {
+        extra = '<p><strong>Next step:</strong> Visit the office with a valid ID or passport. If the item is a phone, staff may ask you to unlock it for verification.</p>';
+      }
+      if (st === 'rejected' && c.admin_reject_reason) {
+        extra += '<p><strong>Reason:</strong> ' + esc(c.admin_reject_reason) + '</p>';
+        extra += '<p>You can submit a new claim from the Found for you tab if you have stronger proof.</p>';
+      }
+
+      const mainPhoto = photos.length ? 'uploads/' + esc(photos[0].path.split('/').pop()) : '';
+      let thumbs = '';
+      photos.forEach(function (p, i) {
+        thumbs += '<img src="uploads/' + esc(p.path.split('/').pop()) + '" data-idx="' + i + '" alt="Proof">';
+      });
+
+      root.innerHTML =
+        '<h2>Your claim</h2>' + pill +
+        '<p><strong>Found item:</strong> ' + esc(c.found_name) + '</p>' +
+        '<p><strong>Your lost report:</strong> ' + esc(c.lost_name) + '</p>' +
+        '<p><strong>Submitted:</strong> ' + esc(c.created_at) + '</p>' +
+        '<p><strong>Your description:</strong> ' + esc(c.proof_description) + '</p>' +
+        extra +
+        (mainPhoto ? '<img class="hero-img" id="heroImg" src="' + mainPhoto + '" alt="">' : '') +
+        (thumbs ? '<div class="gallery" id="gal">' + thumbs + '</div>' : '');
+
+      const gal = document.getElementById('gal');
+      if (gal) {
+        gal.addEventListener('click', function (e) {
+          const t = e.target.closest('img');
+          if (!t) return;
+          const i = parseInt(t.getAttribute('data-idx'), 10);
+          const path = 'uploads/' + photos[i].path.split('/').pop();
+          const hero = document.getElementById('heroImg');
+          if (hero) hero.src = path;
+        });
+      }
+    })
+    .catch(function () {
+      root.innerHTML = '<p>Could not load claim.</p>';
+    });
+})();
+</script>
+</body>
+</html>

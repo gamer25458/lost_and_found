@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit claim | Lost & Found</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .form-card { max-width: 720px; margin: 30px auto; padding: 28px; background: #fff; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.07); }
+    .form-card h2 { color: #0a3d62; margin-bottom: 8px; }
+    .hint { color: #666; font-size: 14px; margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+    input, textarea, select { width: 100%; padding: 10px 12px; margin-bottom: 16px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
+    textarea { min-height: 100px; resize: vertical; }
+    .msg { padding: 12px; border-radius: 8px; margin-bottom: 16px; display: none; }
+    .msg.error { background: #fdecea; color: #c0392b; display: block; }
+    .req { color: #c0392b; }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="logo">Lost & Found</div>
+  <ul class="nav-links">
+    <li><a href="items.html">My Items</a></li>
+    <li><a href="backend/logout.php">Logout</a></li>
+  </ul>
+</nav>
+
+<div class="form-card">
+  <h2>Claim a found item</h2>
+  <p class="hint">Provide strong proof that this item is yours. Upload clear photos (you with the item, receipts, serial numbers, packaging, etc.).</p>
+  <div id="msg" class="msg"></div>
+
+  <form id="claimForm" action="backend/submit_claim.php" method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="found_id" id="foundId">
+    <input type="hidden" name="lost_id" id="lostId">
+
+    <label>Match this found item to your lost report <span class="req">*</span></label>
+    <select id="lostSelect" required>
+      <option value="">— Loading —</option>
+    </select>
+
+    <label>Describe your proof <span class="req">*</span></label>
+    <textarea name="proof_description" required placeholder="Explain why this item is yours: identifiable marks, contents, when/where you lost it, etc."></textarea>
+
+    <label>Unique details (engraving, mark, serial number, etc.)</label>
+    <textarea name="provided_unique_details" rows="3" placeholder="Provide any unique details that only the owner would know (engraved name, distinctive mark, etc.)"></textarea>
+    <div class="hint">This helps us verify you are the rightful owner.</div>
+
+    <label>Serial / product number (if any)</label>
+    <input type="text" name="serial_number" placeholder="IMEI, serial on device, engraved ID…">
+
+    <label>Receipt, box, or package notes</label>
+    <textarea name="box_receipt_notes" placeholder="Purchase date, store, color of box, accessories inside…"></textarea>
+
+    <label>Phone / device unlock password (only if applicable)</label>
+    <input type="text" name="device_unlock_password" placeholder="If staff must verify a phone, you may provide a temporary password (optional).">
+
+    <label>Proof photos <span class="req">*</span> (up to 5, JPG/PNG/GIF)</label>
+    <input type="file" name="photos[]" accept="image/*" multiple required>
+
+    <button type="submit" class="btn">Submit claim</button>
+    <a href="items.html?tab=found" class="btn secondary" style="display:inline-block;margin-top:10px;">Cancel</a>
+  </form>
+</div>
+
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const foundId = parseInt(params.get('found_id') || '0', 10);
+  const presetLost = parseInt(params.get('lost_id') || '0', 10);
+
+  if (!foundId) {
+    document.getElementById('msg').textContent = 'Missing found item.';
+    document.getElementById('msg').classList.add('error');
+    document.getElementById('claimForm').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('foundId').value = String(foundId);
+
+  if (params.get('error')) {
+    const m = document.getElementById('msg');
+    m.textContent = params.get('error');
+    m.classList.add('error');
+  }
+
+  fetch('backend/fetch_eligible_lost.php?found_id=' + foundId)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      const sel = document.getElementById('lostSelect');
+      sel.innerHTML = '';
+      if (data.error || !data.lost_items || !data.lost_items.length) {
+        sel.innerHTML = '<option value="">No matching lost report — same category required</option>';
+        sel.disabled = true;
+        document.getElementById('claimForm').querySelector('button[type=submit]').disabled = true;
+        return;
+      }
+      data.lost_items.forEach(function (li) {
+        const o = document.createElement('option');
+        o.value = li.id;
+        o.textContent = li.item_name + ' (lost ' + (li.date_lost || '') + ')';
+        sel.appendChild(o);
+      });
+      if (presetLost) {
+        sel.value = String(presetLost);
+      }
+      syncLost();
+    })
+    .catch(function () {
+      document.getElementById('lostSelect').innerHTML = '<option value="">Could not load</option>';
+    });
+
+  function syncLost() {
+    const v = document.getElementById('lostSelect').value;
+    document.getElementById('lostId').value = v;
+  }
+
+  document.getElementById('lostSelect').addEventListener('change', syncLost);
+
+  document.getElementById('claimForm').addEventListener('submit', function () {
+    syncLost();
+  });
+})();
+</script>
+</body>
+</html>

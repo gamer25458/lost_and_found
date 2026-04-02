@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Items | Lost & Found</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* (same styles as before, plus avatar) */
+        .page-header { text-align: center; padding: 40px 20px 10px; }
+        .page-header h2 { font-size: 24px; color: #0a3d62; margin-bottom: 6px; }
+        .page-header p  { color: #666; font-size: 14px; }
+
+        .msg-bar { max-width: 960px; margin: 15px auto 0; padding: 0 20px; }
+        .msg-bar .success { background:#eafaf1; color:#27ae60; padding:12px 16px; border-radius:8px; font-size:14px; }
+        .msg-bar .error   { background:#fdecea; color:#c0392b; padding:12px 16px; border-radius:8px; font-size:14px; }
+
+        .tabs {
+            display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;
+            max-width: 960px; margin: 24px auto 0; padding: 0 20px;
+        }
+        .tabs button {
+            padding: 10px 18px; border: 1px solid #d7e7f6; background: #fff;
+            border-radius: 999px; cursor: pointer; font-size: 14px; color: #0a3d62;
+        }
+        .tabs button.active { background: #0a3d62; color: #fff; border-color: #0a3d62; }
+
+        .filter-bar {
+            display: flex; justify-content: center; gap: 10px;
+            flex-wrap: wrap; max-width: 960px; margin: 20px auto; padding: 0 20px;
+        }
+        .filter-bar select, .filter-bar input {
+            padding: 9px 14px; border: 1px solid #ccc;
+            border-radius: 8px; font-size: 14px; min-width: 150px;
+        }
+        .filter-bar button {
+            padding: 9px 20px; background: #0a3d62; color: white;
+            border: none; border-radius: 8px; cursor: pointer; font-size: 14px;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px; max-width: 960px; margin: 0 auto 50px; padding: 0 20px;
+        }
+
+        .item-card {
+            background: #fff; padding: 18px; border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.09); border-left: 4px solid #ccc;
+        }
+        .item-card.lost  { border-left-color: #ff9800; }
+        .item-card.found { border-left-color: #4caf50; }
+        .item-card h3 { margin: 0 0 10px; font-size: 16px; color: #0a3d62; }
+        .item-card p  { font-size: 13px; color: #555; margin: 4px 0; }
+
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;
+        }
+        .badge.lost  { background: #fff3e0; color: #e65100; }
+        .badge.found { background: #e8f5e9; color: #2e7d32; }
+        .badge.collected { background: #e3f2fd; color: #1565c0; }
+
+        .item-image { width:100%; height:160px; object-fit:cover; border-radius:6px; margin-top:10px; }
+
+        .state-msg {
+            text-align: center; padding: 50px 20px;
+            color: #888; font-size: 15px; grid-column: 1 / -1;
+        }
+
+        .claim-actions { margin-top: 12px; }
+        .claim-actions a, .claim-actions span {
+            display: inline-block; padding: 8px 14px; border-radius: 8px; font-size: 13px;
+            text-decoration: none;
+        }
+        .claim-actions a.btn-claim { background: #0a3d62; color: #fff; }
+        .claim-actions span.muted { color: #777; background: #f0f0f0; }
+
+        .empty-state-btn {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #0a3d62;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 999px;
+            font-size: 14px;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+        .empty-state-btn:hover {
+            background: #08324a;
+        }
+        .empty-state-container {
+            text-align: center;
+            grid-column: 1 / -1;
+            padding: 40px 20px;
+        }
+
+        /* Avatar in navbar */
+        .nav-links li.avatar-li {
+            margin-left: 20px;
+            list-style: none;
+        }
+        .nav-links li.avatar-li img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="logo">Lost & Found</div>
+    <ul class="nav-links">
+        <li><a href="backend/dashboard.php">Dashboard</a></li>
+        <li><a href="lost.html">Report Lost</a></li>
+        <li><a href="items.html">My Items</a></li>
+        <li class="nav-notif-wrap">
+            <button type="button" class="notif-bell" id="notifBell" aria-label="Notifications">🔔 <span class="notif-badge" id="notifBadge"></span></button>
+            <div class="notif-panel" id="notifPanel">
+                <div class="notif-actions"><button type="button" id="markAllRead">Mark all read</button></div>
+                <div id="notifMount"></div>
+            </div>
+        </li>
+        <li><a href="backend/logout.php">Logout</a></li>
+        <li class="avatar-li">
+            <img id="userAvatar" src="images/default-avatar.png" alt="Avatar">
+        </li>
+    </ul>
+</nav>
+
+<div class="page-header">
+    <h2>📋 My Items</h2>
+    <p>Lost reports, matching found items, and collected items</p>
+</div>
+
+<div class="msg-bar" id="msgBar"></div>
+
+<div class="tabs" id="tabs">
+    <button type="button" data-tab="lost" class="active">Lost</button>
+    <button type="button" data-tab="found">Found for you</button>
+    <button type="button" data-tab="collected">Collected</button>
+</div>
+
+<div class="filter-bar" id="filterBar">
+    <select id="filterCategory">
+        <option value="">All Categories</option>
+        <option value="Electronics">Electronics</option>
+        <option value="Clothing">Clothing</option>
+        <option value="Accessories">Accessories</option>
+        <option value="Documents">Documents</option>
+        <option value="Keys">Keys</option>
+        <option value="Bag">Bag</option>
+        <option value="Other">Other</option>
+    </select>
+    <input type="text" id="filterSearch" placeholder="Search...">
+    <button type="button" id="btnSearch">Search</button>
+</div>
+
+<div class="items-grid" id="itemsContainer">
+    <div class="state-msg">Loading...</div>
+</div>
+
+<script src="js/notifications.js"></script>
+<script>
+(function () {
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  let currentTab = 'lost';
+
+  function getParams() {
+    const u = new URL(window.location.href);
+    if (u.searchParams.get('tab') === 'found' || u.searchParams.get('tab') === 'collected') {
+      currentTab = u.searchParams.get('tab');
+    }
+  }
+
+  function syncTabButtons() {
+    document.querySelectorAll('#tabs button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-tab') === currentTab);
+    });
+  }
+
+  function imgSrc(path) {
+    if (!path) return '';
+    const base = path.split('/').pop();
+    return 'uploads/' + esc(base);
+  }
+
+  function loadLost() {
+    const container = document.getElementById('itemsContainer');
+    container.innerHTML = '<div class="state-msg">Loading...</div>';
+    const cat = document.getElementById('filterCategory').value;
+    const q = document.getElementById('filterSearch').value.trim();
+    const url = 'backend/fetch_items.php?type=lost&mine=1&search=' + encodeURIComponent(q) + '&category=' + encodeURIComponent(cat);
+    fetch(url)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        container.innerHTML = '';
+        if (data.error) {
+          container.innerHTML = '<div class="state-msg">' + esc(data.error) + '</div>';
+          return;
+        }
+        const activeItems = data.filter(function (item) {
+          return parseInt(item.resolved, 10) !== 1;
+        });
+        if (!activeItems.length) {
+          container.innerHTML = `
+            <div class="empty-state-container">
+              <div class="state-msg" style="padding-bottom:0;">No active lost items.</div>
+              <a href="lost.html" class="empty-state-btn">➕ Report a lost item</a>
+            </div>`;
+          return;
+        }
+        activeItems.forEach(function (item) {
+          const wrap = document.createElement('div');
+          wrap.className = 'item-card-wrap';
+          const card = document.createElement('div');
+          card.className = 'item-card lost';
+          card.innerHTML =
+            '<span class="badge lost">lost</span>' +
+            '<h3>' + esc(item.item_name) + '</h3>' +
+            '<p><strong>Category:</strong> ' + esc(item.category || '—') + '</p>' +
+            '<p><strong>Description:</strong> ' + esc(item.description || '—') + '</p>' +
+            '<p><strong>Location:</strong> ' + esc(item.location || '—') + '</p>' +
+            '<p><strong>Date:</strong> ' + esc(item.date || '—') + '</p>' +
+            (item.image_path ? '<img src="' + imgSrc(item.image_path) + '" class="item-image" alt="">' : '');
+          wrap.appendChild(card);
+          container.appendChild(wrap);
+        });
+      })
+      .catch(function () {
+        container.innerHTML = '<div class="state-msg">Could not load items.</div>';
+      });
+  }
+
+  function loadFound() {
+    const container = document.getElementById('itemsContainer');
+    container.innerHTML = '<div class="state-msg">Loading...</div>';
+    const cat = document.getElementById('filterCategory').value;
+    const q = document.getElementById('filterSearch').value.trim();
+    const url = 'backend/fetch_matched_found.php?search=' + encodeURIComponent(q) + '&category=' + encodeURIComponent(cat);
+    fetch(url)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        container.innerHTML = '';
+        if (data.error) {
+          container.innerHTML = '<div class="state-msg">' + esc(data.error) + '</div>';
+          return;
+        }
+        if (!data.length) {
+          container.innerHTML = '<div class="state-msg">No matching found items right now. When an admin posts a found item in a category you reported lost, it will show here.</div>';
+          return;
+        }
+        data.forEach(function (item) {
+          const card = document.createElement('div');
+          card.className = 'item-card found';
+          const st = item.my_claim_status || '';
+          let actions = '';
+          if (item.claim_blocked) {
+            actions = '<div class="claim-actions"><span class="muted">Claim closed — another user was approved for this item.</span></div>';
+          } else if (st === 'pending') {
+            actions = '<div class="claim-actions"><a class="btn-claim" href="claim_status.html?id=' + item.my_claim_id + '">Preview claim</a> <span class="muted" style="margin-left:8px;">Pending review</span></div>';
+          } else if (st === 'approved') {
+            actions = '<div class="claim-actions"><a class="btn-claim" href="claim_status.html?id=' + item.my_claim_id + '">Preview claim</a> <span class="muted" style="margin-left:8px;">Approved — bring ID to office</span></div>';
+          } else if (st === 'rejected') {
+            actions = '<div class="claim-actions"><a class="btn-claim" href="claim.html?found_id=' + item.id + '">Submit new claim</a></div>';
+          } else {
+            actions = '<div class="claim-actions"><a class="btn-claim" href="claim.html?found_id=' + item.id + '">Claim</a></div>';
+          }
+          card.innerHTML =
+            '<span class="badge found">found</span>' +
+            '<h3>' + esc(item.item_name) + '</h3>' +
+            '<p><strong>Category:</strong> ' + esc(item.category || '—') + '</p>' +
+            '<p><strong>Description:</strong> ' + esc(item.description || '—') + '</p>' +
+            '<p><strong>Location:</strong> ' + esc(item.location || '—') + '</p>' +
+            '<p><strong>Date:</strong> ' + esc(item.date || '—') + '</p>' +
+            (item.my_claim_id ? '<p><strong>Claim number:</strong> ' + esc(item.my_claim_id.toString().replace(/^#/, '')) + '</p>' : '') +
+            (item.image_path ? '<img src="' + imgSrc(item.image_path) + '" class="item-image previewable" alt="" style="cursor:pointer" data-src="' + imgSrc(item.image_path) + '" data-title="' + esc(item.item_name) + '">' : '') +
+            actions;
+          container.appendChild(card);
+          if (item.image_path) {
+            const img = card.querySelector('.item-image.previewable');
+            if (img) {
+              img.addEventListener('click', function() {
+                if (window.openImagePreview) {
+                  window.openImagePreview(this.getAttribute('data-src'), this.getAttribute('data-title'));
+                } else if (typeof openImagePreview === 'function') {
+                  openImagePreview(this.getAttribute('data-src'), this.getAttribute('data-title'));
+                }
+              });
+            }
+          }
+        });
+      })
+      .catch(function () {
+        container.innerHTML = '<div class="state-msg">Could not load found items.</div>';
+      });
+  }
+
+  function loadCollected() {
+    const container = document.getElementById('itemsContainer');
+    container.innerHTML = '<div class="state-msg">Loading...</div>';
+    fetch('backend/fetch_collected.php')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        container.innerHTML = '';
+        if (data.error) {
+          container.innerHTML = '<div class="state-msg">' + esc(data.error) + '</div>';
+          return;
+        }
+        if (!data.length) {
+          container.innerHTML = '<div class="state-msg">Nothing collected yet. After you pick up an item at the office, it will appear here.</div>';
+          return;
+        }
+        data.forEach(function (row) {
+          const card = document.createElement('div');
+          card.className = 'item-card found';
+          const ph = row.handover_photo_path ? imgSrc(row.handover_photo_path) : '';
+          card.innerHTML =
+            '<span class="badge found">issued</span>' +
+            '<h3>' + esc(row.item_name) + '</h3>' +
+            '<p><strong>Category:</strong> ' + esc(row.category || '—') + '</p>' +
+            '<p><strong>Issued as (legal name):</strong> ' + esc(row.legal_name) + '</p>' +
+            '<p><strong>ID / Passport:</strong> ' + esc(row.id_passport_number) + '</p>' +
+            '<p><strong>Issued:</strong> ' + esc(row.issued_at) + '</p>' +
+            (ph ? '<img src="' + ph + '" class="item-image" alt="Handover photo">' : '');
+          container.appendChild(card);
+        });
+      })
+      .catch(function () {
+        container.innerHTML = '<div class="state-msg">Could not load collected items.</div>';
+      });
+  }
+
+  function refresh() {
+    if (currentTab === 'lost') loadLost();
+    else if (currentTab === 'found') loadFound();
+    else loadCollected();
+  }
+
+  document.getElementById('tabs').addEventListener('click', function (e) {
+    const btn = e.target.closest('button[data-tab]');
+    if (!btn) return;
+    currentTab = btn.getAttribute('data-tab');
+    syncTabButtons();
+    const u = new URL(window.location.href);
+    u.searchParams.set('tab', currentTab);
+    history.replaceState({}, '', u);
+    refresh();
+  });
+
+  document.getElementById('btnSearch').addEventListener('click', refresh);
+
+  document.getElementById('notifBell').addEventListener('click', function (e) {
+    e.stopPropagation();
+    document.getElementById('notifPanel').classList.toggle('open');
+    loadNotifications('notifMount', 'notifBadge');
+  });
+  document.getElementById('markAllRead').addEventListener('click', function (e) {
+    e.stopPropagation();
+    markAllNotificationsRead('notifMount', 'notifBadge');
+  });
+  document.addEventListener('click', function () {
+    document.getElementById('notifPanel').classList.remove('open');
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const params = new URLSearchParams(window.location.search);
+    const bar = document.getElementById('msgBar');
+    if (params.has('success')) {
+      bar.innerHTML = '<div class="success">Saved successfully.</div>';
+    }
+    getParams();
+    syncTabButtons();
+    if (params.get('tab') === 'found') currentTab = 'found';
+    if (params.get('tab') === 'collected') currentTab = 'collected';
+    syncTabButtons();
+    refresh();
+    loadNotifications('notifMount', 'notifBadge');
+  });
+
+  // Avatar
+  fetch('backend/session_info.php')
+    .then(r => r.json())
+    .then(s => {
+      if (s.logged_in) {
+        const avatarImg = document.getElementById('userAvatar');
+        if (s.gender === 'male') avatarImg.src = 'images/male.png';
+        else if (s.gender === 'female') avatarImg.src = 'images/female.png';
+        else avatarImg.src = 'images/default-avatar.png';
+      }
+    });
+})();
+</script>
+</body>
+</html>

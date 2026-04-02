@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Lost Item | Lost & Found</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .form-card { background: white; max-width: 750px; margin: 30px auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .form-card h2 { color: #0a3d62; margin-bottom: 25px; font-size: 22px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        .form-group label { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 6px; }
+        .form-group input, .form-group textarea, .form-group select { padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; width: 100%; }
+        .form-group textarea { resize: vertical; }
+        .form-actions { margin-top: 20px; }
+        .msg { padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 14px; display: none; }
+        .msg.error   { background: #fdecea; color: #c0392b; display: block; }
+        .msg.success { background: #eafaf1; color: #27ae60; display: block; }
+        .hint { font-size: 12px; color: #888; margin-top: 4px; }
+
+        /* Avatar in navbar */
+        .nav-links li.avatar-li {
+            margin-left: 20px;
+            list-style: none;
+        }
+        .nav-links li.avatar-li img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="logo">Lost & Found</div>
+    <ul class="nav-links">
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="lost.html">Report Lost</a></li>
+        <li><a href="items.html">View Items</a></li>
+        <li><a href="backend/logout.php">Logout</a></li>
+        <li class="avatar-li">
+            <img id="userAvatar" src="images/default-avatar.png" alt="Avatar">
+        </li>
+    </ul>
+</nav>
+
+<section class="about">
+    <div class="form-card">
+        <h2>🔍 Report Lost Item</h2>
+        <div id="msgBox" class="msg"></div>
+
+        <form action="backend/submit_lost.php" method="POST" enctype="multipart/form-data">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Item Name *</label>
+                    <input type="text" name="item_name" placeholder="e.g. Black Wallet" required>
+                </div>
+                <div class="form-group">
+                    <label>Category *</label>
+                    <select name="category" required>
+                        <option value="">-- Select Category --</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Accessories">Accessories</option>
+                        <option value="Documents">Documents</option>
+                        <option value="Keys">Keys</option>
+                        <option value="Bag">Bag</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="text" name="color" placeholder="e.g. blue, red, black">
+                </div>
+                <div class="form-group">
+                    <label>Date Lost</label>
+                    <input type="date" name="date_lost" id="dateLost">
+                </div>
+                <div class="form-group">
+                    <label>Location Lost</label>
+                    <input type="text" name="location_lost" placeholder="e.g. Library, Block B">
+                </div>
+                <div class="form-group full-width">
+                    <label>Description</label>
+                    <textarea name="description" rows="4" placeholder="Describe the item in detail..."></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label>Unique Details (Only you and admins can see this)</label>
+                    <textarea name="unique_details" rows="3" placeholder="Engraved name, serial number, distinctive mark, etc. This helps us verify your claim."></textarea>
+                    <div class="hint">This information is kept private and will be used to verify ownership when you claim a found item.</div>
+                </div>
+                <div class="form-group full-width">
+                    <label>Photos (optional)</label>
+                    <input type="file" name="images[]" id="lostImages" accept="image/*" multiple capture="environment">
+                    <div id="photoRenameList"></div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn">Submit Report</button>
+            </div>
+        </form>
+        <script>
+            const lostImages = document.getElementById('lostImages');
+            const photoRenameList = document.getElementById('photoRenameList');
+            lostImages.addEventListener('change', function() {
+                photoRenameList.innerHTML = '';
+                Array.from(this.files).forEach((file, idx) => {
+                    const div = document.createElement('div');
+                    div.style.margin = '10px 0';
+                    div.innerHTML =
+                      `<strong>Photo ${idx+1}:</strong> ` +
+                      `<input type="text" value="${file.name.replace(/\.[^.]+$/, '')}" data-idx="${idx}" style="padding:4px 8px;border-radius:6px;border:1px solid #ccc;width:180px;">` +
+                      `.${file.name.split('.').pop()}` +
+                      `<span style="margin-left:12px;"><img src="${URL.createObjectURL(file)}" style="height:40px;border-radius:6px;vertical-align:middle;"></span>`;
+                    photoRenameList.appendChild(div);
+                });
+            });
+            document.querySelector('form').addEventListener('submit', function(e) {
+                const files = lostImages.files;
+                const renames = photoRenameList.querySelectorAll('input[type=text]');
+                if (files.length && renames.length === files.length) {
+                    const dt = new DataTransfer();
+                    Array.from(files).forEach((file, idx) => {
+                        const ext = file.name.split('.').pop();
+                        const newName = renames[idx].value.trim() ? renames[idx].value.trim() + '.' + ext : file.name;
+                        const renamedFile = new File([file], newName, {type: file.type});
+                        dt.items.add(renamedFile);
+                    });
+                    lostImages.files = dt.files;
+                }
+            });
+        </script>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    fetch('backend/session_info.php')
+        .then(function (r) { return r.json(); })
+        .then(function (s) {
+            if (!s.logged_in) { window.location.href = 'login.html'; }
+            // Set avatar
+            const avatarImg = document.getElementById('userAvatar');
+            if (s.gender === 'male') avatarImg.src = 'images/male.png';
+            else if (s.gender === 'female') avatarImg.src = 'images/female.png';
+            else avatarImg.src = 'images/default-avatar.png';
+        })
+        .catch(function () { window.location.href = 'login.html'; });
+
+    const params  = new URLSearchParams(window.location.search);
+    const msgBox  = document.getElementById('msgBox');
+
+    if (params.has('error')) {
+        msgBox.textContent = params.get('error');
+        msgBox.classList.add('error');
+    }
+    if (params.has('success')) {
+        msgBox.textContent = 'Report submitted successfully!';
+        msgBox.classList.add('success');
+    }
+
+    const dateInput = document.getElementById('dateLost');
+    if (dateInput) {
+        dateInput.max = new Date().toISOString().split('T')[0];
+    }
+});
+</script>
+</body>
+</html>
